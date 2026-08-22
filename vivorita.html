@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>🐍 La Viborita de Colores 🌈</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background:
+                radial-gradient(circle at top, #182818, #080b08 70%);
+            font-family: Arial, Helvetica, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: min(94vw, 520px);
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: clamp(24px, 6vw, 38px);
+            color: #7CFF6B;
+            text-shadow: 0 0 15px rgba(124, 255, 107, 0.5);
+        }
+
+        #info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        #score {
+            color: #7CFF6B;
+        }
+
+        #high-score {
+            color: #FFD54A;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            background-color: #101510;
+            border: 3px solid #3f633f;
+            border-radius: 12px;
+            box-shadow:
+                0 0 25px rgba(72, 255, 72, 0.18),
+                inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .instructions {
+            margin-top: 12px;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        #start-message {
+            margin-top: 12px;
+            color: #7CFF6B;
+            font-weight: bold;
+        }
+
+        /* Pantalla de Game Over */
+        #game-over {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.78);
+            z-index: 10;
+            padding: 20px;
+        }
+
+        #game-over-box {
+            width: min(90vw, 380px);
+            padding: 30px 25px;
+            text-align: center;
+            background: #151b15;
+            border: 2px solid #ff5252;
+            border-radius: 18px;
+            box-shadow: 0 0 35px rgba(255, 50, 50, 0.25);
+        }
+
+        #game-over h2 {
+            margin-top: 0;
+            color: #ff5252;
+            font-size: 32px;
+        }
+
+        #final-score {
+            font-size: 20px;
+            margin: 15px 0;
+        }
+
+        #restart-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            background: #7CFF6B;
+            color: #071007;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.05);
+            background: #9aff8c;
+        }
+
+        /* Controles para celular */
+        #mobile-controls {
+            display: none;
+            margin: 15px auto 0;
+            width: 180px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 7px;
+        }
+
+        .control-btn {
+            width: 55px;
+            height: 55px;
+            border: 1px solid #416641;
+            border-radius: 12px;
+            background: #192319;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .control-btn:active {
+            background: #315331;
+            transform: scale(0.95);
+        }
+
+        .up {
+            grid-column: 2;
+        }
+
+        .left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .down {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                overflow: auto;
+            }
+
+            #mobile-controls {
+                display: grid;
+            }
+
+            .instructions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container">
+
+        <h1>🐍 La Viborita 🌈</h1>
+
+        <div id="info">
+            <span id="score">Puntuación: 0</span>
+            <span id="high-score">Récord: 0</span>
+        </div>
+
+        <canvas id="game-canvas" width="500" height="500"></canvas>
+
+        <div class="instructions">
+            ⌨️ Usa las flechas para moverte · Presiona R para reiniciar
+        </div>
+
+        <div id="start-message">
+            Presioná una flecha para comenzar 🐍
+        </div>
+
+        <div id="mobile-controls">
+            <button class="control-btn up" data-direction="up">⬆️</button>
+            <button class="control-btn left" data-direction="left">⬅️</button>
+            <button class="control-btn down" data-direction="down">⬇️</button>
+            <button class="control-btn right" data-direction="right">➡️</button>
+        </div>
+
+    </div>
+
+    <!-- GAME OVER -->
+
+    <div id="game-over">
+
+        <div id="game-over-box">
+
+            <h2>💀 GAME OVER 💀</h2>
+
+            <p id="final-score">Puntuación: 0</p>
+
+            <p id="record-message"></p>
+
+            <button id="restart-btn">
+                🔄 Jugar de nuevo
+            </button>
+
+            <p>También podés presionar <strong>R</strong></p>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // ==========================================
+        // CONFIGURACIÓN
+        // ==========================================
+
+        const canvas = document.getElementById("game-canvas");
+        const ctx = canvas.getContext("2d");
+
+        const scoreElement = document.getElementById("score");
+        const highScoreElement = document.getElementById("high-score");
+
+        const gameOverElement = document.getElementById("game-over");
+        const finalScoreElement = document.getElementById("final-score");
+        const recordMessageElement = document.getElementById("record-message");
+
+        const restartBtn = document.getElementById("restart-btn");
+        const startMessage = document.getElementById("start-message");
+
+        const GRID_SIZE = 25;
+        const TILE_COUNT = canvas.width / GRID_SIZE;
+
+        const COLORS = [
+            "#ff5252",
+            "#ffeb3b",
+            "#2196f3",
+            "#ff9800",
+            "#e040fb",
+            "#00e5ff"
+        ];
+
+
+        // ==========================================
+        // VARIABLES DEL JUEGO
+        // ==========================================
+
+        let snake;
+        let food;
+
+        let direction;
+        let nextDirection;
+
+        let score = 0;
+
+        let gameRunning = false;
+        let gameOverState = false;
+
+        let gameLoop = null;
+
+        let speed = 120;
+
+        let highScore =
+            Number(localStorage.getItem("viboritaRecord")) || 0;
+
+
+        highScoreElement.textContent = `Récord: ${highScore}`;
+
+
+        // ==========================================
+        // INICIAR / REINICIAR JUEGO
+        // ==========================================
+
+        function startGame() {
+
+            clearInterval(gameLoop);
+
+            snake = [
+                { x: 10, y: 10 },
+                { x: 9, y: 10 },
+                { x: 8, y: 10 }
+            ];
+
+            direction = {
+                x: 0,
+                y: 0
+            };
+
+            nextDirection = {
+                x: 0,
+                y: 0
+            };
+
+            score = 0;
+
+            speed = 120;
+
+            gameRunning = false;
+            gameOverState = false;
+
+            scoreElement.textContent = "Puntuación: 0";
+
+            startMessage.style.display = "block";
+
+            gameOverElement.style.display = "none";
+
+            createFood();
+
+            draw();
+
+        }
+
+
+        // ==========================================
+        // CREAR COMIDA
+        // ==========================================
+
+        function createFood() {
+
+            let validPosition = false;
+
+            while (!validPosition) {
+
+                food = {
+                    x: Math.floor(Math.random() * TILE_COUNT),
+                    y: Math.floor(Math.random() * TILE_COUNT),
+                    color: COLORS[
+                        Math.floor(Math.random() * COLORS.length)
+                    ]
+                };
+
+                validPosition = !snake.some(segment =>
+                    segment.x === food.x &&
+                    segment.y === food.y
+                );
+            }
+        }
+
+
+        // ==========================================
+        // CAMBIAR DIRECCIÓN
+        // ==========================================
+
+        function changeDirection(newDirection) {
+
+            if (gameOverState) {
+                return;
+            }
+
+            const directions = {
+                up: { x: 0, y: -1 },
+                down: { x: 0, y: 1 },
+                left: { x: -1, y: 0 },
+                right: { x: 1, y: 0 }
+            };
+
+            const newDir = directions[newDirection];
+
+            if (!newDir) {
+                return;
+            }
+
+
+            // No permite darse vuelta sobre sí misma
+
+            if (
+                direction.x !== 0 &&
+                newDir.x === -direction.x
+            ) {
+                return;
+            }
+
+            if (
+                direction.y !== 0 &&
+                newDir.y === -direction.y
+            ) {
+                return;
+            }
+
+
+            nextDirection = newDir;
+
+
+            // Si estaba quieta, empieza
+
+            if (!gameRunning) {
+
+                direction = nextDirection;
+
+                gameRunning = true;
+
+                startMessage.style.display = "none";
+
+                gameLoop = setInterval(
+                    updateGame,
+                    speed
+                );
+            }
+
+        }
+
+
+        // ==========================================
+        // ACTUALIZAR JUEGO
+        // ==========================================
+
+        function updateGame() {
+
+            direction = {
+                ...nextDirection
+            };
+
+
+            const head = {
+                x: snake[0].x + direction.x,
+                y: snake[0].y + direction.y
+            };
+
+
+            // --------------------------------------
+            // COLISIÓN CON PAREDES
+            // --------------------------------------
+
+            if (
+                head.x < 0 ||
+                head.x >= TILE_COUNT ||
+                head.y < 0 ||
+                head.y >= TILE_COUNT
+            ) {
+
+                endGame();
+
+                return;
+            }
+
+
+            // --------------------------------------
+            // COMPROBAR SI COMIÓ
+            // --------------------------------------
+
+            const eating =
+                head.x === food.x &&
+                head.y === food.y;
+
+
+            // --------------------------------------
+            // COLISIÓN CON EL CUERPO
+            // --------------------------------------
+
+            /*
+                Si no está comiendo, la cola se mueve.
+                Por eso no hace falta comprobar el último
+                segmento en ese caso.
+            */
+
+            const bodyToCheck = eating
+                ? snake
+                : snake.slice(0, -1);
+
+
+            if (
+                bodyToCheck.some(segment =>
+                    segment.x === head.x &&
+                    segment.y === head.y
+                )
+            ) {
+
+                endGame();
+
+                return;
+            }
+
+
+            // --------------------------------------
+            // MOVER CABEZA
+            // --------------------------------------
+
+            snake.unshift(head);
+
+
+            // --------------------------------------
+            // COMER
+            // --------------------------------------
+
+            if (eating) {
+
+                score += 10;
+
+                scoreElement.textContent =
+                    `Puntuación: ${score}`;
+
+
+                // Crear nueva comida
+
+                createFood();
+
+
+                // Aumentar dificultad
+
+                if (score % 50 === 0 && speed > 55) {
+
+                    speed -= 10;
+
+                    clearInterval(gameLoop);
+
+                    gameLoop = setInterval(
+                        updateGame,
+                        speed
+                    );
+                }
+
+            } else {
+
+                // Si no comió, quitar cola
+
+                snake.pop();
+
+            }
+
+
+            draw();
+
+        }
+
+
+        // ==========================================
+        // DIBUJAR TODO
+        // ==========================================
+
+        function draw() {
+
+            // Fondo
+
+            ctx.fillStyle = "#101510";
+
+            ctx.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+
+            drawGrid();
+
+            drawFood();
+
+            drawSnake();
+
+        }
+
+
+        // ==========================================
+        // DIBUJAR CUADRÍCULA
+        // ==========================================
+
+        function drawGrid() {
+
+            ctx.strokeStyle =
+                "rgba(255,255,255,0.035)";
+
+            ctx.lineWidth = 1;
+
+
+            for (
+                let i = 0;
+                i <= TILE_COUNT;
+                i++
+            ) {
+
+                const position =
+                    i * GRID_SIZE;
+
+
+                ctx.beginPath();
+
+                ctx.moveTo(position, 0);
+
+                ctx.lineTo(
+                    position,
+                    canvas.height
+                );
+
+                ctx.stroke();
+
+
+                ctx.beginPath();
+
+                ctx.moveTo(0, position);
+
+                ctx.lineTo(
+                    canvas.width,
+                    position
+                );
+
+                ctx.stroke();
+            }
+
+        }
+
+
+        // ==========================================
+        // DIBUJAR COMIDA
+        // ==========================================
+
+        function drawFood() {
+
+            const centerX =
+                food.x * GRID_SIZE +
+                GRID_SIZE / 2;
+
+            const centerY =
+                food.y * GRID_SIZE +
+                GRID_SIZE / 2;
+
+
+            // Brillo
+
+            ctx.shadowColor = food.color;
+            ctx.shadowBlur = 15;
+
+            ctx.fillStyle = food.color;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                centerX,
+                centerY,
+                GRID_SIZE * 0.32,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+
+
+            // Puntito blanco
+
+            ctx.fillStyle = "white";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                centerX - 4,
+                centerY - 4,
+                3,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+
+        }
+
+
+        // ==========================================
+        // DIBUJAR VÍBORA
+        // ==========================================
+
+        function drawSnake() {
+
+            snake.forEach((segment, index) => {
+
+                const x =
+                    segment.x * GRID_SIZE;
+
+                const y =
+                    segment.y * GRID_SIZE;
+
+
+                const padding = 2;
+
+
+                // Cabeza
+
+                if (index === 0) {
+
+                    ctx.fillStyle = "#7CFF6B";
+
+                    ctx.shadowColor =
+                        "rgba(124,255,107,0.5)";
+
+                    ctx.shadowBlur = 8;
+
+                    roundRect(
+                        x + padding,
+                        y + padding,
+                        GRID_SIZE - padding * 2,
+                        GRID_SIZE - padding * 2,
+                        7
+                    );
+
+                    ctx.fill();
+
+                    ctx.shadowBlur = 0;
+
+
+                    // Ojos
+
+                    drawEyes(x, y);
+
+                }
+
+                // Cuerpo
+
+                else {
+
+                    const hue =
+                        (index * 18) % 80;
+
+                    ctx.fillStyle =
+                        `hsl(${110 + hue}, 70%, 48%)`;
+
+
+                    roundRect(
+                        x + padding,
+                        y + padding,
+                        GRID_SIZE - padding * 2,
+                        GRID_SIZE - padding * 2,
+                        6
+                    );
+
+                    ctx.fill();
+
+                }
+
+            });
+
+        }
+
+
+        // ==========================================
+        // OJOS DE LA VÍBORA
+        // ==========================================
+
+        function drawEyes(x, y) {
+
+            let eye1;
+            let eye2;
+
+
+            if (direction.x > 0) {
+
+                eye1 = {
+                    x: x + 18,
+                    y: y + 7
+                };
+
+                eye2 = {
+                    x: x + 18,
+                    y: y + 18
+                };
+
+            } else if (direction.x < 0) {
+
+                eye1 = {
+                    x: x + 7,
+                    y: y + 7
+                };
+
+                eye2 = {
+                    x: x + 7,
+                    y: y + 18
+                };
+
+            } else if (direction.y < 0) {
+
+                eye1 = {
+                    x: x + 7,
+                    y: y + 7
+                };
+
+                eye2 = {
+                    x: x + 18,
+                    y: y + 7
+                };
+
+            } else {
+
+                eye1 = {
+                    x: x + 7,
+                    y: y + 18
+                };
+
+                eye2 = {
+                    x: x + 18,
+                    y: y + 18
+                };
+
+            }
+
+
+            ctx.fillStyle = "#071007";
+
+
+            ctx.beginPath();
+
+            ctx.arc(
+                eye1.x,
+                eye1.y,
+                2.5,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+
+
+            ctx.beginPath();
+
+            ctx.arc(
+                eye2.x,
+                eye2.y,
+                2.5,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+
+        }
+
+
+        // ==========================================
+        // RECTÁNGULO REDONDEADO
+        // ==========================================
+
+        function roundRect(
+            x,
+            y,
+            width,
+            height,
+            radius
+        ) {
+
+            ctx.beginPath();
+
+            ctx.roundRect(
+                x,
+                y,
+                width,
+                height,
+                radius
+            );
+
+        }
+
+
+        // ==========================================
+        // GAME OVER
+        // ==========================================
+
+        function endGame() {
+
+            gameRunning = false;
+
+            gameOverState = true;
+
+            clearInterval(gameLoop);
+
+
+            finalScoreElement.textContent =
+                `Puntuación: ${score}`;
+
+
+            if (score > highScore) {
+
+                highScore = score;
+
+                localStorage.setItem(
+                    "viboritaRecord",
+                    highScore
+                );
+
+                highScoreElement.textContent =
+                    `Récord: ${highScore}`;
+
+                recordMessageElement.textContent =
+                    "🏆 ¡NUEVO RÉCORD! 🏆";
+
+            } else {
+
+                recordMessageElement.textContent =
+                    `Tu récord es ${highScore}`;
+
+            }
+
+
+            gameOverElement.style.display =
+                "flex";
+
+        }
+
+
+        // ==========================================
+        // TECLADO
+        // ==========================================
+
+        document.addEventListener(
+            "keydown",
+            function(event) {
+
+                const keys = {
+
+                    ArrowUp: "up",
+                    ArrowDown: "down",
+                    ArrowLeft: "left",
+                    ArrowRight: "right"
+
+                };
+
+
+                if (keys[event.key]) {
+
+                    event.preventDefault();
+
+                    changeDirection(
+                        keys[event.key]
+                    );
+
+                }
+
+
+                // R = reiniciar
+
+                if (
+                    event.key.toLowerCase() === "r"
+                ) {
+
+                    startGame();
+
+                }
+
+            }
+        );
+
+
+        // ==========================================
+        // BOTONES CELULAR
+        // ==========================================
+
+        document.querySelectorAll(
+            ".control-btn"
+        ).forEach(button => {
+
+            button.addEventListener(
+                "click",
+                function() {
+
+                    changeDirection(
+                        this.dataset.direction
+                    );
+
+                }
+            );
+
+        });
+
+
+        // ==========================================
+        // BOTÓN REINICIAR
+        // ==========================================
+
+        restartBtn.addEventListener(
+            "click",
+            startGame
+        );
+
+
+        // ==========================================
+        // ARRANCAR
+        // ==========================================
+
+        startGame();
+
+    </script>
+
+</body>
+</html>
